@@ -10,7 +10,7 @@ use OpenApi\Attributes as OA;
     description: "توثيق واجهات برمجة التطبيقات (APIs) لمنصة فرح لتطبيق Flutter"
 )]
 #[OA\Server(
-    url: "https://farahbackend-production.up.railway.app",
+    url: "https://farah-production.up.railway.app",
     description: "سيرفر الإنتاج (Railway Production)"
 )]
 #[OA\Server(

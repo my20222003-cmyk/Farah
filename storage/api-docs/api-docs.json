@@ -7,7 +7,7 @@
     },
     "servers": [
         {
-            "url": "https://farahbackend-production.up.railway.app",
+            "url": "https://farah-production.up.railway.app",
             "description": "سيرفر الإنتاج (Railway Production)"
         },
         {
