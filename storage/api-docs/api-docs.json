@@ -127,7 +127,35 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "تم إنشاء الحساب بنجاح"
+                        "description": "تم إنشاء الحساب وإرسال رابط التفعيل",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "type": "object"
+                                                },
+                                                "email_verification_required": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "422": {
                         "description": "خطأ في البيانات المدخلة"
@@ -1359,6 +1387,122 @@
                 }
             }
         },
+        "/api/provider/external-bookings": {
+            "get": {
+                "tags": [
+                    "External Bookings"
+                ],
+                "summary": "عرض الحجوزات الخارجية للمزود",
+                "operationId": "60bca377ff0790313f55f931de51f6c3",
+                "responses": {
+                    "200": {
+                        "description": "قائمة الحجوزات الخارجية"
+                    },
+                    "401": {
+                        "description": "غير مصرح"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "External Bookings"
+                ],
+                "summary": "إضافة حجز خارجي للمزود",
+                "operationId": "55caf1e90f733a5505b055510847e109",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "customer_name",
+                                    "service_name",
+                                    "booking_date",
+                                    "total_price"
+                                ],
+                                "properties": {
+                                    "customer_name": {
+                                        "type": "string",
+                                        "example": "سارة أحمد"
+                                    },
+                                    "customer_phone": {
+                                        "type": "string",
+                                        "example": "0501234567",
+                                        "nullable": true
+                                    },
+                                    "service_name": {
+                                        "type": "string",
+                                        "example": "قاعة الموهبة"
+                                    },
+                                    "booking_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-10-20"
+                                    },
+                                    "booking_time": {
+                                        "type": "string",
+                                        "format": "time",
+                                        "example": "18:00",
+                                        "nullable": true
+                                    },
+                                    "total_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 960
+                                    },
+                                    "deposit_amount": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 300,
+                                        "nullable": true
+                                    },
+                                    "payment_method": {
+                                        "type": "string",
+                                        "example": "bank_transfer",
+                                        "nullable": true
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "enum": [
+                                            "pending",
+                                            "confirmed",
+                                            "cancelled"
+                                        ]
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "تم حفظ الحجز الخارجي"
+                    },
+                    "401": {
+                        "description": "غير مصرح"
+                    },
+                    "422": {
+                        "description": "بيانات غير صالحة"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/favorites": {
             "get": {
                 "tags": [
@@ -1531,6 +1675,60 @@
                     },
                     "401": {
                         "description": "غير مصرح (يرجى تسجيل الدخول)"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/services/{id}/favorite": {
+            "post": {
+                "tags": [
+                    "Favorites"
+                ],
+                "summary": "إضافة أو إزالة خدمة من المفضلة",
+                "operationId": "d8a64811e25f81ef1cb7d115419d8321",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "تم تحديث حالة المفضلة",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "is_favorited": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "الخدمة غير موجودة"
+                    },
+                    "401": {
+                        "description": "غير مصرح"
                     }
                 },
                 "security": [
@@ -2161,6 +2359,77 @@
                         "bearerAuth": []
                     }
                 ]
+            },
+            "patch": {
+                "tags": [
+                    "Locations"
+                ],
+                "summary": "تعديل عنوان محدد جزئيًا",
+                "operationId": "951ce0d1b06d08e92c93fc3b0cd85d6c",
+                "parameters": [
+                    {
+                        "name": "location",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "label": {
+                                        "type": "string",
+                                        "example": "العمل"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "شارع الرمال، غزة"
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 31.51
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 34.45
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "تم تحديث العنوان بنجاح"
+                    },
+                    "403": {
+                        "description": "العنوان غير تابع للمستخدم الحالي"
+                    },
+                    "422": {
+                        "description": "خطأ في البيانات المدخلة"
+                    },
+                    "401": {
+                        "description": "غير مصرح"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/locations/{location}/primary": {
@@ -2508,6 +2777,10 @@
                     "content": {
                         "multipart/form-data": {
                             "schema": {
+                                "required": [
+                                    "title",
+                                    "price"
+                                ],
                                 "properties": {
                                     "title": {
                                         "type": "string",
@@ -2517,11 +2790,23 @@
                                         "type": "integer",
                                         "nullable": true
                                     },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
                                     "description": {
                                         "type": "string",
                                         "nullable": true
                                     },
+                                    "service_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "service",
+                                            "package"
+                                        ]
+                                    },
                                     "features": {
+                                        "description": "مصفوفة JSON مرسلة كنص.",
                                         "type": "string",
                                         "example": "[\"مواقف سيارات\",\"نظام صوتي\"]"
                                     },
@@ -2533,7 +2818,12 @@
                                         "type": "number",
                                         "nullable": true
                                     },
+                                    "area_unit": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
                                     "booking_slots": {
+                                        "description": "مصفوفة JSON مرسلة كنص.",
                                         "type": "string",
                                         "example": "[{\"label\":\"الفترة المسائية\",\"start_time\":\"17:00\",\"end_time\":\"22:00\"}]"
                                     },
@@ -2541,13 +2831,66 @@
                                         "type": "number",
                                         "format": "float"
                                     },
+                                    "pricing_unit": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "execution_duration": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "cancellation_policy": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "nullable": true
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "nullable": true
+                                    },
+                                    "deposit_amount": {
+                                        "type": "number",
+                                        "nullable": true
+                                    },
+                                    "deposit_percentage": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
                                     "currency": {
                                         "type": "string",
                                         "example": "ILS"
                                     },
+                                    "is_available": {
+                                        "type": "boolean",
+                                        "nullable": true
+                                    },
                                     "image": {
                                         "type": "string",
                                         "format": "binary"
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    },
+                                    "remove_image_ids": {
+                                        "description": "مصفوفة JSON لمعرّفات الصور المراد حذفها.",
+                                        "type": "string",
+                                        "example": "[1,2]"
+                                    },
+                                    "package_items": {
+                                        "description": "مصفوفة JSON لعناصر الباقة.",
+                                        "type": "string",
+                                        "example": "[{\"title\":\"التصوير\",\"quantity\":1}]"
                                     }
                                 },
                                 "type": "object"
@@ -2557,7 +2900,26 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "تم إنشاء الخدمة"
+                        "description": "تم إنشاء الخدمة",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "icon": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -2586,29 +2948,116 @@
                     }
                 ],
                 "requestBody": {
+                    "required": true,
                     "content": {
                         "multipart/form-data": {
                             "schema": {
+                                "required": [
+                                    "title",
+                                    "price"
+                                ],
                                 "properties": {
                                     "title": {
                                         "type": "string"
                                     },
+                                    "category_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
                                     "description": {
                                         "type": "string"
                                     },
+                                    "service_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "service",
+                                            "package"
+                                        ]
+                                    },
                                     "features": {
+                                        "description": "مصفوفة JSON مرسلة كنص.",
                                         "type": "string"
                                     },
+                                    "capacity": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "area": {
+                                        "type": "number",
+                                        "nullable": true
+                                    },
+                                    "area_unit": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
                                     "booking_slots": {
+                                        "description": "مصفوفة JSON مرسلة كنص.",
                                         "type": "string"
                                     },
                                     "price": {
                                         "type": "number",
                                         "format": "float"
                                     },
+                                    "pricing_unit": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "execution_duration": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "cancellation_policy": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "nullable": true
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "nullable": true
+                                    },
+                                    "deposit_amount": {
+                                        "type": "number",
+                                        "nullable": true
+                                    },
+                                    "deposit_percentage": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "currency": {
+                                        "type": "string"
+                                    },
+                                    "is_available": {
+                                        "type": "boolean"
+                                    },
                                     "image": {
                                         "type": "string",
                                         "format": "binary"
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    },
+                                    "remove_image_ids": {
+                                        "description": "مصفوفة JSON لمعرّفات الصور المراد حذفها.",
+                                        "type": "string"
+                                    },
+                                    "package_items": {
+                                        "description": "مصفوفة JSON لعناصر الباقة.",
+                                        "type": "string"
                                     }
                                 },
                                 "type": "object"
@@ -2618,7 +3067,26 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "تم تعديل الخدمة"
+                        "description": "تم تعديل الخدمة",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "icon": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -2771,16 +3239,28 @@
                         "application/json": {
                             "schema": {
                                 "properties": {
-                                    "slots": {
+                                    "block_dates": {
                                         "type": "array",
                                         "items": {
+                                            "properties": {
+                                                "date": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2026-10-15"
+                                                },
+                                                "reason": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
-                                    "unavailable_dates": {
+                                    "unblock_dates": {
                                         "type": "array",
                                         "items": {
-                                            "type": "object"
+                                            "type": "string",
+                                            "format": "date"
                                         }
                                     }
                                 },
@@ -2791,7 +3271,25 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "تم تحديث التقويم"
+                        "description": "تم تحديث التقويم",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "422": {
                         "description": "بيانات غير صالحة"
@@ -3709,6 +4207,10 @@
         {
             "name": "Cities",
             "description": "المدن والمناطق"
+        },
+        {
+            "name": "External Bookings",
+            "description": "إدارة الحجوزات الخارجية للمزود"
         },
         {
             "name": "Favorites",

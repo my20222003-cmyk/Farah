@@ -128,7 +128,11 @@ class FavoriteController extends Controller
             ];
         })->filter()->values();
 
-        return $this->success('تم جلب المفضلة بنجاح.', $data);
+        return response()->json([
+            'status' => true,
+            'message' => 'تم جلب المفضلة بنجاح.',
+            'data' => $data,
+        ]);
     }
 
     #[OA\Post(
@@ -168,6 +172,18 @@ class FavoriteController extends Controller
             )
         ]
     )]
+    #[OA\Post(
+        path: "/api/services/{id}/favorite",
+        summary: "إضافة أو إزالة خدمة من المفضلة",
+        security: [["bearerAuth" => []]],
+        tags: ["Favorites"],
+        parameters: [new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer", example: 1))],
+        responses: [
+            new OA\Response(response: 200, description: "تم تحديث حالة المفضلة", content: new OA\JsonContent(properties: [new OA\Property(property: "status", type: "boolean"), new OA\Property(property: "is_favorited", type: "boolean"), new OA\Property(property: "message", type: "string")])),
+            new OA\Response(response: 404, description: "الخدمة غير موجودة"),
+            new OA\Response(response: 401, description: "غير مصرح")
+        ]
+    )]
     public function toggle(Request $request, $serviceId)
     {
         $user = $request->user();
@@ -181,7 +197,12 @@ class FavoriteController extends Controller
 
         if ($favorite) {
             $favorite->delete();
-            return $this->success('تمت إزالة الخدمة من المفضلة بنجاح.', ['is_favorited' => false]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'تمت إزالة الخدمة من المفضلة بنجاح.',
+                'is_favorited' => false,
+            ]);
         }
 
         Favorite::create([
@@ -189,6 +210,10 @@ class FavoriteController extends Controller
             'service_id' => $service->id,
         ]);
 
-        return $this->success('تمت إضافة الخدمة إلى المفضلة بنجاح.', ['is_favorited' => true]);
+        return response()->json([
+            'status' => true,
+            'message' => 'تمت إضافة الخدمة إلى المفضلة بنجاح.',
+            'is_favorited' => true,
+        ]);
     }
 }

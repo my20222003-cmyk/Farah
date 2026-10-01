@@ -113,6 +113,8 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
             Route::post('/bookings/{bookingId}/payments/{paymentId}/review', [BookingController::class, 'reviewPayment']);
             Route::post('/bookings/{id}/complete', [BookingController::class, 'complete']);
             Route::get('/bookings/{bookingId}/payments/{paymentId}/proof', [BookingController::class, 'downloadProof']);
+            Route::get('/external-bookings', [\App\Http\Controllers\Api\ExternalBookingController::class, 'index']);
+            Route::post('/external-bookings', [\App\Http\Controllers\Api\ExternalBookingController::class, 'store']);
             Route::get('/services', [ProviderController::class, 'services']);
             Route::post('/services', [ProviderController::class, 'storeService']);
             Route::post('/services/{id}', [ProviderController::class, 'updateService']);

@@ -60,9 +60,41 @@ class AuthController extends Controller
 
 
 
-    #[OA\Post(path: "/api/register", summary: "تسجيل حساب جديد", tags: ["Auth"], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ["name", "email", "password", "password_confirmation"], properties: [new OA\Property(property: "name", type: "string", example: "محمد ياسر"), new OA\Property(property: "email", type: "string", format: "email", example: "user@example.com"), new OA\Property(property: "password", type: "string", format: "password", example: "password123"), new OA\Property(property: "password_confirmation", type: "string", format: "password", example: "password123"), new OA\Property(property: "user_type", type: "string", enum: ["customer", "provider"], example: "customer"), new OA\Property(property: "phone", type: "string", example: "0599000000"), new OA\Property(property: "city_id", type: "integer", example: 1)])), responses: [new OA\Response(response: 201, description: "تم إنشاء الحساب بنجاح"), new OA\Response(response: 422, description: "خطأ في البيانات المدخلة")])]
-
-    
+    #[OA\Post(
+        path: "/api/register",
+        summary: "تسجيل حساب جديد",
+        tags: ["Auth"],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["name", "email", "password", "password_confirmation"],
+                properties: [
+                    new OA\Property(property: "name", type: "string", example: "محمد ياسر"),
+                    new OA\Property(property: "email", type: "string", format: "email", example: "user@example.com"),
+                    new OA\Property(property: "password", type: "string", format: "password", example: "password123"),
+                    new OA\Property(property: "password_confirmation", type: "string", format: "password", example: "password123"),
+                    new OA\Property(property: "user_type", type: "string", enum: ["customer", "provider"], example: "customer"),
+                    new OA\Property(property: "phone", type: "string", example: "0599000000"),
+                    new OA\Property(property: "city_id", type: "integer", example: 1)
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: "تم إنشاء الحساب وإرسال رابط التفعيل",
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: "success", type: "boolean", example: true),
+                    new OA\Property(property: "message", type: "string"),
+                    new OA\Property(property: "data", type: "object", properties: [
+                        new OA\Property(property: "user", type: "object"),
+                        new OA\Property(property: "email_verification_required", type: "boolean", example: true)
+                    ])
+                ])
+            ),
+            new OA\Response(response: 422, description: "خطأ في البيانات المدخلة")
+        ]
+    )]
     public function register(RegisterRequest $request): JsonResponse
     {
         $user = User::create([
@@ -73,19 +105,9 @@ class AuthController extends Controller
             'phone' => $request->input('phone'),
             'city_id' => $request->input('city_id'),
             'status' => 'active',
-           /* 'email_verified_at' => null,*/
-            'email_verified_at' => now(),
+            'email_verified_at' => null,
         ]);
 
-        // إرجاع الـ Token مباشرة ليتكمن المطور من الدخول واختبار باقي التدفق (Flow)
-        return $this->success('تم إنشاء الحساب وتفعيله بنجاح.', array_merge(
-            $this->tokenData($user),
-            [
-                'user' => $this->userData($user),
-                'email_verification_required' => false,
-            ]
-        ), 201);
-/*
         try {
             $user->sendEmailVerificationNotification();
         } catch (\Throwable $exception) {
@@ -96,7 +118,7 @@ class AuthController extends Controller
         return $this->success('تم إنشاء الحساب. تحقق من بريدك الإلكتروني لتفعيله ثم سجّل الدخول.', [
             'user' => $this->userData($user),
             'email_verification_required' => true,
-        ], 201);*/
+        ], 201);
     }
 
     #[OA\Post(path: "/api/auth/google", summary: "تسجيل الدخول عبر Google", tags: ["Auth"], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ["id_token"], properties: [new OA\Property(property: "id_token", type: "string", example: "google-id-token"), new OA\Property(property: "user_type", type: "string", enum: ["customer", "provider"], example: "customer")])), responses: [new OA\Response(response: 200, description: "تم تسجيل الدخول عبر Google بنجاح"), new OA\Response(response: 401, description: "رمز Google غير صالح"), new OA\Response(response: 403, description: "الحساب غير نشط"), new OA\Response(response: 422, description: "خطأ في البيانات المدخلة")])]

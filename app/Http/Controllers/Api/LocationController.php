@@ -139,6 +139,29 @@ class LocationController extends Controller
             new OA\Response(response: 401, description: "غير مصرح")
         ]
     )]
+    #[OA\Patch(
+        path: "/api/locations/{location}",
+        summary: "تعديل عنوان محدد جزئيًا",
+        security: [["bearerAuth" => []]],
+        tags: ["Locations"],
+        parameters: [new OA\Parameter(name: "location", in: "path", required: true, schema: new OA\Schema(type: "integer", example: 1))],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(properties: [
+                new OA\Property(property: "label", type: "string", example: "العمل"),
+                new OA\Property(property: "address", type: "string", example: "شارع الرمال، غزة"),
+                new OA\Property(property: "city_id", type: "integer", example: 1),
+                new OA\Property(property: "latitude", type: "number", format: "float", example: 31.5100),
+                new OA\Property(property: "longitude", type: "number", format: "float", example: 34.4500)
+            ])
+        ),
+        responses: [
+            new OA\Response(response: 200, description: "تم تحديث العنوان بنجاح"),
+            new OA\Response(response: 403, description: "العنوان غير تابع للمستخدم الحالي"),
+            new OA\Response(response: 422, description: "خطأ في البيانات المدخلة"),
+            new OA\Response(response: 401, description: "غير مصرح")
+        ]
+    )]
     public function update(LocationRequest $request, Location $location)
     {
         $this->authorizeLocation($request, $location);
