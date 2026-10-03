@@ -172,18 +172,6 @@ class FavoriteController extends Controller
             )
         ]
     )]
-    #[OA\Post(
-        path: "/api/services/{id}/favorite",
-        summary: "إضافة أو إزالة خدمة من المفضلة",
-        security: [["bearerAuth" => []]],
-        tags: ["Favorites"],
-        parameters: [new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer", example: 1))],
-        responses: [
-            new OA\Response(response: 200, description: "تم تحديث حالة المفضلة", content: new OA\JsonContent(properties: [new OA\Property(property: "status", type: "boolean"), new OA\Property(property: "is_favorited", type: "boolean"), new OA\Property(property: "message", type: "string")])),
-            new OA\Response(response: 404, description: "الخدمة غير موجودة"),
-            new OA\Response(response: 401, description: "غير مصرح")
-        ]
-    )]
     public function toggle(Request $request, $serviceId)
     {
         $user = $request->user();

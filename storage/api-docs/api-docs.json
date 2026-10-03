@@ -1684,60 +1684,6 @@
                 ]
             }
         },
-        "/api/services/{id}/favorite": {
-            "post": {
-                "tags": [
-                    "Favorites"
-                ],
-                "summary": "إضافة أو إزالة خدمة من المفضلة",
-                "operationId": "d8a64811e25f81ef1cb7d115419d8321",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "تم تحديث حالة المفضلة",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean"
-                                        },
-                                        "is_favorited": {
-                                            "type": "boolean"
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "الخدمة غير موجودة"
-                    },
-                    "401": {
-                        "description": "غير مصرح"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/home": {
             "get": {
                 "tags": [
