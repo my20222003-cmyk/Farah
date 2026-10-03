@@ -11,20 +11,23 @@ class AuthVerificationApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_normalizes_email_before_sending_verification(): void
+    public function test_registration_normalizes_email_and_auto_verifies_provider(): void
     {
         $response = $this->postJson('/api/register', [
             'name' => 'Test User',
             'email' => '  User@Example.COM  ',
             'password' => 'password123',
             'password_confirmation' => 'password123',
+            'user_type' => 'provider',
         ]);
 
-        $response->assertStatus(201);
+        $response->assertCreated()
+            ->assertJsonPath('data.user.role', 'provider')
+            ->assertJsonPath('data.token_type', 'Bearer');
         $this->assertDatabaseHas('users', [
             'email' => 'user@example.com',
-            'email_verified_at' => null,
         ]);
+        $this->assertNotNull(User::where('email', 'user@example.com')->value('email_verified_at'));
     }
 
     public function test_user_can_verify_email_via_hash_without_signed_expiration_check(): void

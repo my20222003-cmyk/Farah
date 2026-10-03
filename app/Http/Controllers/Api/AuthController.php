@@ -82,13 +82,14 @@ class AuthController extends Controller
         responses: [
             new OA\Response(
                 response: 201,
-                description: "تم إنشاء الحساب وإرسال رابط التفعيل",
+                description: "تم إنشاء الحساب وتفعيله بنجاح",
                 content: new OA\JsonContent(properties: [
                     new OA\Property(property: "success", type: "boolean", example: true),
                     new OA\Property(property: "message", type: "string"),
                     new OA\Property(property: "data", type: "object", properties: [
+                        new OA\Property(property: "token", type: "string"),
+                        new OA\Property(property: "token_type", type: "string", example: "Bearer"),
                         new OA\Property(property: "user", type: "object"),
-                        new OA\Property(property: "email_verification_required", type: "boolean", example: true)
                     ])
                 ])
             ),
@@ -105,20 +106,10 @@ class AuthController extends Controller
             'phone' => $request->input('phone'),
             'city_id' => $request->input('city_id'),
             'status' => 'active',
-            'email_verified_at' => null,
+            'email_verified_at' => now(),
         ]);
 
-        try {
-            $user->sendEmailVerificationNotification();
-        } catch (\Throwable $exception) {
-            Log::warning('تعذر إرسال رسالة تفعيل البريد: '.$exception->getMessage());
-        }
-
-        // لا يُنشأ token هنا؛ لا يمكن الدخول إلى الـ API قبل تأكيد البريد.
-        return $this->success('تم إنشاء الحساب. تحقق من بريدك الإلكتروني لتفعيله ثم سجّل الدخول.', [
-            'user' => $this->userData($user),
-            'email_verification_required' => true,
-        ], 201);
+        return $this->success('تم إنشاء الحساب وتفعيله بنجاح.', $this->tokenData($user), 201);
     }
 
     #[OA\Post(path: "/api/auth/google", summary: "تسجيل الدخول عبر Google", tags: ["Auth"], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ["id_token"], properties: [new OA\Property(property: "id_token", type: "string", example: "google-id-token"), new OA\Property(property: "user_type", type: "string", enum: ["customer", "provider"], example: "customer")])), responses: [new OA\Response(response: 200, description: "تم تسجيل الدخول عبر Google بنجاح"), new OA\Response(response: 401, description: "رمز Google غير صالح"), new OA\Response(response: 403, description: "الحساب غير نشط"), new OA\Response(response: 422, description: "خطأ في البيانات المدخلة")])]

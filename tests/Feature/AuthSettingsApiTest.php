@@ -12,7 +12,7 @@ class AuthSettingsApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_requires_email_verification_before_a_token_is_issued(): void
+    public function test_registration_automatically_verifies_user_and_returns_access_token(): void
     {
         Notification::fake();
 
@@ -26,10 +26,15 @@ class AuthSettingsApiTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.email_verification_required', true)
-            ->assertJsonMissingPath('data.token');
+            ->assertJsonPath('data.token_type', 'Bearer')
+            ->assertJsonPath('data.user.email_verified_at', fn ($value) => $value !== null);
 
-        $this->assertNull(User::where('email', 'new@example.test')->value('email_verified_at'));
+        $token = $response->json('data.token');
+        $this->assertNotEmpty($token);
+        $this->assertNotNull(User::where('email', 'new@example.test')->value('email_verified_at'));
+        Notification::assertNothingSent();
+
+        $this->withToken($token)->getJson('/api/profile')->assertOk();
     }
 
     public function test_notification_settings_are_created_with_safe_defaults_and_can_be_updated(): void

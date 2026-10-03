@@ -15,10 +15,10 @@ This document explains how the Flutter team should integrate with the Laravel AP
 - Add token to all protected requests as header:
   - `Authorization: Bearer <token>`
 
-## Email Verification
-- Email verification is used; users must verify their email before logging in.
-- To resend verification email: `POST /api/resend-verification-email` with `{ "email": "..." }`
-- Check `user.email_verified_at` on server side — Flutter should consider `login` failure with 403 and message "Please verify your email before logging in." as indicator the user needs to verify email.
+## Account Activation
+- New registrations are activated and email-verified automatically; `POST /api/register` returns a Sanctum token immediately.
+- Existing accounts created before this behavior changed may still be unverified and receive 403 on login.
+- The email verification and resend endpoints remain available for those legacy accounts.
 
 ## Password Reset
 - Password reset is email-only: call `POST /api/forgot-password` with `{ "email": "..." }`.
@@ -43,8 +43,8 @@ This document explains how the Flutter team should integrate with the Laravel AP
 
 ## Endpoints (short list)
 - `GET /api/cities` — list cities
-- `POST /api/register` — register new user (sends verification email)
-- `POST /api/login` — login (requires verified email)
+- `POST /api/register` — register and activate a new user, returning a token
+- `POST /api/login` — login
 - `POST /api/logout` — logout (auth required)
 - `POST /api/forgot-password` — send reset link
 - `POST /api/reset-password` — reset password
@@ -55,7 +55,7 @@ This document explains how the Flutter team should integrate with the Laravel AP
 - `API Resource /api/locations` — locations CRUD (auth required)
 
 ## Common responses
-- Success example (login):
+- Success example (registration and login):
 
 ```json
 {
@@ -69,7 +69,7 @@ This document explains how the Flutter team should integrate with the Laravel AP
 }
 ```
 
-- Error (email not verified): HTTP 403
+- Error (legacy account email not verified): HTTP 403
 ```json
 { "icon":"error", "title":"Please verify your email before logging in." }
 ```
