@@ -20,11 +20,11 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
-#[OA\Tag(name: "Bookings", description: "إدارة حجوزات العملاء ومزودي الخدمة والمدفوعات")]
+#[OA\Tag(name: 'Bookings', description: 'إدارة حجوزات العملاء ومزودي الخدمة والمدفوعات')]
 class BookingController extends Controller
 {
     use ApiResponse, ImageUrlHelper;
@@ -32,10 +32,9 @@ class BookingController extends Controller
     public function __construct(
         private readonly NotificationService $notifications,
         private readonly BookingExpirationService $expiration,
-    ) {
-    }
+    ) {}
 
-    #[OA\Post(path: "/api/services/{id}/bookings", summary: "إنشاء طلب حجز", security: [["bearerAuth" => []]], tags: ["Bookings"], parameters: [new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ["booking_date", "booking_time"], properties: [new OA\Property(property: "booking_date", type: "string", format: "date"), new OA\Property(property: "booking_time", type: "string"), new OA\Property(property: "booking_slot", type: "string", nullable: true), new OA\Property(property: "notes", type: "string", nullable: true)])), responses: [new OA\Response(response: 201, description: "تم إرسال طلب الحجز"), new OA\Response(response: 422, description: "الفترة غير متاحة")])]
+    #[OA\Post(path: '/api/services/{id}/bookings', summary: 'إنشاء طلب حجز', security: [['bearerAuth' => []]], tags: ['Bookings'], parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['booking_date', 'booking_time'], properties: [new OA\Property(property: 'booking_date', type: 'string', format: 'date'), new OA\Property(property: 'booking_time', type: 'string'), new OA\Property(property: 'booking_slot', type: 'string', nullable: true), new OA\Property(property: 'notes', type: 'string', nullable: true)])), responses: [new OA\Response(response: 201, description: 'تم إرسال طلب الحجز'), new OA\Response(response: 422, description: 'الفترة غير متاحة')])]
     public function store(CreateBookingRequest $request, int $id)
     {
         $this->expiration->expireStale();
@@ -81,7 +80,7 @@ class BookingController extends Controller
         return $this->success('تم إرسال طلب الحجز إلى مزود الخدمة.', $this->bookingData($booking), 201);
     }
 
-    #[OA\Get(path: "/api/bookings", summary: "قائمة حجوزات العميل", security: [["bearerAuth" => []]], tags: ["Bookings"], responses: [new OA\Response(response: 200, description: "قائمة الحجوزات"), new OA\Response(response: 401, description: "غير مصرح")])]
+    #[OA\Get(path: '/api/bookings', summary: 'قائمة حجوزات العميل', security: [['bearerAuth' => []]], tags: ['Bookings'], responses: [new OA\Response(response: 200, description: 'قائمة الحجوزات'), new OA\Response(response: 401, description: 'غير مصرح')])]
     public function customerIndex(Request $request)
     {
         $this->expiration->expireStale();
@@ -91,7 +90,7 @@ class BookingController extends Controller
         return $this->successPaginated($bookings, fn (Booking $booking) => $this->bookingData($booking));
     }
 
-    #[OA\Get(path: "/api/provider/bookings", summary: "قائمة حجوزات مزود الخدمة", security: [["bearerAuth" => []]], tags: ["Bookings"], parameters: [new OA\Parameter(name: "status", in: "query", required: false, schema: new OA\Schema(type: "string")), new OA\Parameter(name: "per_page", in: "query", required: false, schema: new OA\Schema(type: "integer"))], responses: [new OA\Response(response: 200, description: "قائمة الحجوزات"), new OA\Response(response: 401, description: "غير مصرح")])]
+    #[OA\Get(path: '/api/provider/bookings', summary: 'قائمة حجوزات مزود الخدمة', security: [['bearerAuth' => []]], tags: ['Bookings'], parameters: [new OA\Parameter(name: 'status', in: 'query', required: false, schema: new OA\Schema(type: 'string')), new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'قائمة الحجوزات'), new OA\Response(response: 401, description: 'غير مصرح')])]
     public function providerIndex(Request $request)
     {
         $this->expiration->expireStale();
@@ -103,7 +102,7 @@ class BookingController extends Controller
         return $this->successPaginated($bookings, fn (Booking $booking) => $this->bookingData($booking));
     }
 
-    #[OA\Get(path: "/api/provider/bookings/{id}", summary: "تفاصيل حجز لمزود الخدمة", security: [["bearerAuth" => []]], tags: ["Bookings"], parameters: [new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))], responses: [new OA\Response(response: 200, description: "تفاصيل الحجز"), new OA\Response(response: 404, description: "الحجز غير موجود")])]
+    #[OA\Get(path: '/api/provider/bookings/{id}', summary: 'تفاصيل حجز لمزود الخدمة', security: [['bearerAuth' => []]], tags: ['Bookings'], parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'تفاصيل الحجز'), new OA\Response(response: 404, description: 'الحجز غير موجود')])]
     public function providerShow(Request $request, int $id)
     {
         $booking = Booking::with(['service.images', 'service.items', 'user', 'payments'])
@@ -112,8 +111,8 @@ class BookingController extends Controller
         return $this->success('تم جلب تفاصيل الحجز بنجاح.', $this->bookingData($booking));
     }
 
-    #[OA\Get(path: "/api/bookings/{id}", summary: "تفاصيل حجز العميل", security: [["bearerAuth" => []]], tags: ["Bookings"], parameters: [new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))], responses: [new OA\Response(response: 200, description: "تفاصيل الحجز"), new OA\Response(response: 404, description: "الحجز غير موجود")])]
-    #[OA\Get(path: "/api/bookings/{id}/confirmation", summary: "عرض تأكيد الحجز", security: [["bearerAuth" => []]], tags: ["Bookings"], parameters: [new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))], responses: [new OA\Response(response: 200, description: "بيانات تأكيد الحجز"), new OA\Response(response: 404, description: "الحجز غير موجود")])]
+    #[OA\Get(path: '/api/bookings/{id}', summary: 'تفاصيل حجز العميل', security: [['bearerAuth' => []]], tags: ['Bookings'], parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'تفاصيل الحجز'), new OA\Response(response: 404, description: 'الحجز غير موجود')])]
+    #[OA\Get(path: '/api/bookings/{id}/confirmation', summary: 'عرض تأكيد الحجز', security: [['bearerAuth' => []]], tags: ['Bookings'], parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'بيانات تأكيد الحجز'), new OA\Response(response: 404, description: 'الحجز غير موجود')])]
     public function show(Request $request, int $id)
     {
         $booking = Booking::with(['service.images', 'service.items', 'provider.providerProfile', 'payments'])
@@ -122,7 +121,7 @@ class BookingController extends Controller
         return $this->success('تم جلب تفاصيل الحجز بنجاح.', $this->bookingData($booking));
     }
 
-    #[OA\Post(path: "/api/provider/bookings/{id}/decision", summary: "قبول أو رفض طلب حجز", security: [["bearerAuth" => []]], tags: ["Bookings"], parameters: [new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ["decision", "deposit_amount"], properties: [new OA\Property(property: "decision", type: "string", enum: ["accepted", "rejected"]), new OA\Property(property: "deposit_amount", type: "number", format: "float"), new OA\Property(property: "provider_note", type: "string", nullable: true)])), responses: [new OA\Response(response: 200, description: "تم تحديث حالة الطلب"), new OA\Response(response: 422, description: "لا يمكن اتخاذ القرار")])]
+    #[OA\Post(path: '/api/provider/bookings/{id}/decision', summary: 'قبول أو رفض طلب حجز', security: [['bearerAuth' => []]], tags: ['Bookings'], parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['decision', 'deposit_amount'], properties: [new OA\Property(property: 'decision', type: 'string', enum: ['accepted', 'rejected']), new OA\Property(property: 'deposit_amount', type: 'number', format: 'float'), new OA\Property(property: 'provider_note', type: 'string', nullable: true)])), responses: [new OA\Response(response: 200, description: 'تم تحديث حالة الطلب'), new OA\Response(response: 422, description: 'لا يمكن اتخاذ القرار')])]
     public function providerDecision(ProviderBookingDecisionRequest $request, int $id)
     {
         $this->expiration->expireStale();
@@ -140,6 +139,7 @@ class BookingController extends Controller
                     'cancellation_reason' => $request->provider_note,
                     'expires_at' => null,
                 ]);
+
                 return $booking->fresh(['service.images', 'payments']);
             }
 
@@ -162,6 +162,7 @@ class BookingController extends Controller
                 'payment_due_at' => now()->addDay(),
                 'expires_at' => now()->addDay(),
             ]);
+
             return $booking->fresh(['service.images', 'payments']);
         });
 
@@ -173,7 +174,7 @@ class BookingController extends Controller
         return $this->success('تم تحديث حالة الحجز بنجاح.', $this->bookingData($booking));
     }
 
-    #[OA\Post(path: "/api/bookings/{id}/payment-proofs", summary: "رفع إثبات دفع الحجز", security: [["bearerAuth" => []]], tags: ["Bookings"], parameters: [new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))], requestBody: new OA\RequestBody(required: true, content: new OA\MediaType(mediaType: "multipart/form-data", schema: new OA\Schema(required: ["amount", "method", "proof"], properties: [new OA\Property(property: "amount", type: "number", format: "float"), new OA\Property(property: "method", type: "string"), new OA\Property(property: "proof", type: "string", format: "binary"), new OA\Property(property: "customer_note", type: "string", nullable: true)]))), responses: [new OA\Response(response: 201, description: "تم رفع إثبات الدفع"), new OA\Response(response: 422, description: "بيانات الدفع غير صالحة")])]
+    #[OA\Post(path: '/api/bookings/{id}/payment-proofs', summary: 'رفع إثبات دفع الحجز', security: [['bearerAuth' => []]], tags: ['Bookings'], parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], requestBody: new OA\RequestBody(required: true, content: new OA\MediaType(mediaType: 'multipart/form-data', schema: new OA\Schema(required: ['amount', 'method', 'proof'], properties: [new OA\Property(property: 'amount', type: 'number', format: 'float'), new OA\Property(property: 'method', type: 'string'), new OA\Property(property: 'proof', type: 'string', format: 'binary'), new OA\Property(property: 'customer_note', type: 'string', nullable: true)]))), responses: [new OA\Response(response: 201, description: 'تم رفع إثبات الدفع'), new OA\Response(response: 422, description: 'بيانات الدفع غير صالحة')])]
     public function submitPayment(SubmitBookingPaymentRequest $request, int $id)
     {
         $this->expiration->expireStale();
@@ -197,14 +198,16 @@ class BookingController extends Controller
                 'customer_note' => $request->customer_note,
             ]);
             $booking->update(['workflow_status' => 'review_under_proof', 'expires_at' => now()->addDay()]);
+
             return $booking->fresh(['service.images', 'payments']);
         });
 
         $this->notifications->send($booking->provider_id, 'payment_proof_submitted', 'إثبات دفع جديد', 'رفع العميل إثبات تحويل للعربون؛ راجعه لتأكيد الحجز.', 'booking', $booking->id, ['reference' => $booking->reference]);
+
         return $this->success('تم رفع إثبات التحويل وهو الآن قيد مراجعة مزود الخدمة.', $this->bookingData($booking), 201);
     }
 
-    #[OA\Post(path: "/api/provider/bookings/{bookingId}/payments/{paymentId}/review", summary: "مراجعة إثبات الدفع", security: [["bearerAuth" => []]], tags: ["Bookings"], parameters: [new OA\Parameter(name: "bookingId", in: "path", required: true, schema: new OA\Schema(type: "integer")), new OA\Parameter(name: "paymentId", in: "path", required: true, schema: new OA\Schema(type: "integer"))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ["decision"], properties: [new OA\Property(property: "decision", type: "string", enum: ["confirmed", "rejected"]), new OA\Property(property: "review_note", type: "string", nullable: true)])), responses: [new OA\Response(response: 200, description: "تمت مراجعة إثبات الدفع"), new OA\Response(response: 422, description: "لا يمكن مراجعة الإثبات")])]
+    #[OA\Post(path: '/api/provider/bookings/{bookingId}/payments/{paymentId}/review', summary: 'مراجعة إثبات الدفع', security: [['bearerAuth' => []]], tags: ['Bookings'], parameters: [new OA\Parameter(name: 'bookingId', in: 'path', required: true, schema: new OA\Schema(type: 'integer')), new OA\Parameter(name: 'paymentId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['decision'], properties: [new OA\Property(property: 'decision', type: 'string', enum: ['confirmed', 'rejected']), new OA\Property(property: 'review_note', type: 'string', nullable: true)])), responses: [new OA\Response(response: 200, description: 'تمت مراجعة إثبات الدفع'), new OA\Response(response: 422, description: 'لا يمكن مراجعة الإثبات')])]
     public function reviewPayment(ReviewBookingPaymentRequest $request, int $bookingId, int $paymentId)
     {
         $booking = DB::transaction(function () use ($request, $bookingId, $paymentId) {
@@ -220,15 +223,17 @@ class BookingController extends Controller
             } else {
                 $booking->update(['workflow_status' => 'payment_awaiting', 'payment_due_at' => now()->addDay(), 'expires_at' => now()->addDay()]);
             }
+
             return $booking->fresh(['service.images', 'payments']);
         });
 
         $confirmed = $request->decision === 'confirmed';
         $this->notifications->send($booking->user_id, $confirmed ? 'payment_confirmed' : 'payment_rejected', $confirmed ? 'تم تأكيد الدفع والحجز' : 'تعذر اعتماد إثبات الدفع', $confirmed ? 'تم تأكيد حجزك بنجاح.' : ($request->review_note ?: 'راجع بيانات التحويل وارفع إثباتًا جديدًا.'), 'booking', $booking->id, ['reference' => $booking->reference]);
+
         return $this->success('تمت مراجعة إثبات الدفع بنجاح.', $this->bookingData($booking));
     }
 
-    #[OA\Post(path: "/api/bookings/{id}/cancel", summary: "إلغاء حجز العميل", security: [["bearerAuth" => []]], tags: ["Bookings"], parameters: [new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))], requestBody: new OA\RequestBody(content: new OA\JsonContent(properties: [new OA\Property(property: "reason", type: "string", nullable: true)])), responses: [new OA\Response(response: 200, description: "تم إلغاء الحجز"), new OA\Response(response: 422, description: "لا يمكن إلغاء الحجز")])]
+    #[OA\Post(path: '/api/bookings/{id}/cancel', summary: 'إلغاء حجز العميل', security: [['bearerAuth' => []]], tags: ['Bookings'], parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], requestBody: new OA\RequestBody(content: new OA\JsonContent(properties: [new OA\Property(property: 'reason', type: 'string', nullable: true)])), responses: [new OA\Response(response: 200, description: 'تم إلغاء الحجز'), new OA\Response(response: 422, description: 'لا يمكن إلغاء الحجز')])]
     public function cancel(CancelBookingRequest $request, int $id)
     {
         $booking = Booking::where('user_id', $request->user()->id)->findOrFail($id);
@@ -237,10 +242,11 @@ class BookingController extends Controller
         }
         $booking->update(['status' => 'cancelled', 'workflow_status' => 'cancelled', 'cancellation_reason' => $request->reason, 'expires_at' => null]);
         $this->notifications->send($booking->provider_id, 'booking_cancelled', 'تم إلغاء طلب الحجز', $request->reason ?: 'ألغى العميل طلب الحجز.', 'booking', $booking->id, ['reference' => $booking->reference]);
+
         return $this->success('تم إلغاء الحجز بنجاح.', $this->bookingData($booking->fresh(['service.images', 'payments'])));
     }
 
-    #[OA\Post(path: "/api/provider/bookings/{id}/complete", summary: "إكمال الحجز", security: [["bearerAuth" => []]], tags: ["Bookings"], parameters: [new OA\Parameter(name: "id", in: "path", required: true, schema: new OA\Schema(type: "integer"))], responses: [new OA\Response(response: 200, description: "تم إكمال الحجز"), new OA\Response(response: 422, description: "لا يمكن إكمال الحجز")])]
+    #[OA\Post(path: '/api/provider/bookings/{id}/complete', summary: 'إكمال الحجز', security: [['bearerAuth' => []]], tags: ['Bookings'], parameters: [new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'تم إكمال الحجز'), new OA\Response(response: 422, description: 'لا يمكن إكمال الحجز')])]
     public function complete(Request $request, int $id)
     {
         $booking = Booking::where('provider_id', $request->user()->id)->findOrFail($id);
@@ -249,19 +255,21 @@ class BookingController extends Controller
         }
         $booking->update(['status' => 'completed', 'workflow_status' => 'completed', 'completed_at' => now()]);
         $this->notifications->send($booking->user_id, 'booking_completed', 'اكتملت الخدمة', 'يمكنك الآن تقييم الخدمة من صفحة طلباتك.', 'booking', $booking->id, ['reference' => $booking->reference]);
+
         return $this->success('تم إكمال الحجز بنجاح.', $this->bookingData($booking->fresh(['service.images', 'payments'])));
     }
 
-    #[OA\Put(path: "/api/provider/payment-instructions", summary: "تحديث تعليمات التحويل", security: [["bearerAuth" => []]], tags: ["Bookings"], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ["payment_instructions"], properties: [new OA\Property(property: "payment_instructions", type: "string")])), responses: [new OA\Response(response: 200, description: "تم حفظ تعليمات التحويل"), new OA\Response(response: 422, description: "بيانات المزود غير مكتملة")])]
+    #[OA\Put(path: '/api/provider/payment-instructions', summary: 'تحديث تعليمات التحويل', security: [['bearerAuth' => []]], tags: ['Bookings'], requestBody: new OA\RequestBody(required: true, content: new OA\JsonContent(required: ['payment_instructions'], properties: [new OA\Property(property: 'payment_instructions', type: 'string')])), responses: [new OA\Response(response: 200, description: 'تم حفظ تعليمات التحويل'), new OA\Response(response: 422, description: 'بيانات المزود غير مكتملة')])]
     public function updatePaymentInstructions(UpdateProviderPaymentInstructionsRequest $request)
     {
         $profile = $request->user()->providerProfile;
         abort_unless($profile, 422, 'أكمل بيانات مزود الخدمة أولاً.');
         $profile->update(['payment_instructions' => $request->payment_instructions]);
+
         return $this->success('تم حفظ تعليمات التحويل الخارجي.');
     }
 
-    #[OA\Get(path: "/api/provider/bookings/{bookingId}/payments/{paymentId}/proof", summary: "تحميل إثبات الدفع", security: [["bearerAuth" => []]], tags: ["Bookings"], parameters: [new OA\Parameter(name: "bookingId", in: "path", required: true, schema: new OA\Schema(type: "integer")), new OA\Parameter(name: "paymentId", in: "path", required: true, schema: new OA\Schema(type: "integer"))], responses: [new OA\Response(response: 200, description: "ملف إثبات الدفع"), new OA\Response(response: 403, description: "غير مصرح"), new OA\Response(response: 404, description: "الملف غير موجود")])]
+    #[OA\Get(path: '/api/provider/bookings/{bookingId}/payments/{paymentId}/proof', summary: 'تحميل إثبات الدفع', security: [['bearerAuth' => []]], tags: ['Bookings'], parameters: [new OA\Parameter(name: 'bookingId', in: 'path', required: true, schema: new OA\Schema(type: 'integer')), new OA\Parameter(name: 'paymentId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))], responses: [new OA\Response(response: 200, description: 'ملف إثبات الدفع'), new OA\Response(response: 403, description: 'غير مصرح'), new OA\Response(response: 404, description: 'الملف غير موجود')])]
     public function downloadProof(Request $request, int $bookingId, int $paymentId)
     {
         $payment = BookingPayment::where('booking_id', $bookingId)
@@ -276,14 +284,14 @@ class BookingController extends Controller
         return Storage::disk('local')->download($payment->proof_path);
     }
 
-
-
     private function slotTaken(int $serviceId, string $date, string $time, ?string $slot): bool
     {
+        $normalizedTime = Carbon::createFromFormat('H:i', $time)->format('H:i:s');
+
         return Booking::query()
             ->where('service_id', $serviceId)
             ->whereDate('booking_date', $date)
-            ->whereTime('booking_time', $time)
+            ->whereTime('booking_time', $normalizedTime)
             ->when(filled($slot), fn ($q) => $q->where('booking_slot', $slot))
             ->whereIn('workflow_status', ['provider_pending', 'payment_awaiting', 'review_under_proof', 'confirmed'])
             ->exists();
@@ -304,6 +312,7 @@ class BookingController extends Controller
         $service = $booking->service;
         $snapshot = $booking->service_snapshot ?? [];
         $image = $service?->image ?: $service?->images?->first()?->image_path;
+
         return [
             'id' => $booking->id,
             'reference' => $booking->reference,
@@ -323,7 +332,7 @@ class BookingController extends Controller
             'payment_due_at' => $booking->payment_due_at?->toIso8601String(),
             'payment_instructions' => in_array($booking->workflow_status, ['payment_awaiting', 'review_under_proof', 'confirmed', 'completed'], true) ? $booking->payment_instructions : null,
             'service' => [
-                'id'    => $service?->id,
+                'id' => $service?->id,
                 'title' => $service?->title ?? ($snapshot['title'] ?? null),
                 'image' => $this->imageUrl($image),
             ],
@@ -334,7 +343,10 @@ class BookingController extends Controller
 
     private function reference(string $prefix): string
     {
-        do { $reference = $prefix . '-' . now()->format('ymd') . '-' . strtoupper(Str::random(7)); } while (Booking::where('reference', $reference)->exists() || BookingPayment::where('reference', $reference)->exists());
+        do {
+            $reference = $prefix.'-'.now()->format('ymd').'-'.strtoupper(Str::random(7));
+        } while (Booking::where('reference', $reference)->exists() || BookingPayment::where('reference', $reference)->exists());
+
         return $reference;
     }
 }

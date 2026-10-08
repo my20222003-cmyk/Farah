@@ -8,69 +8,69 @@ use App\Http\Controllers\Controller;
 use App\Models\Favorite;
 use App\Models\Service;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use OpenApi\Attributes as OA;
 
-#[OA\Tag(name: "Favorites", description: "إدارة المفضلة وقائمة الخدمات المفضلة للمستخدم")]
+#[OA\Tag(name: 'Favorites', description: 'إدارة المفضلة وقائمة الخدمات المفضلة للمستخدم')]
 class FavoriteController extends Controller
 {
-    use ImageUrlHelper, ApiResponse;
+    use ApiResponse, ImageUrlHelper;
+
     #[OA\Get(
-        path: "/api/favorites",
-        summary: "جلب قائمة الخدمات المفضلة للمستخدم",
-        description: "يسترجع قائمة بجميع الخدمات التي قام المستخدم المسجل بإضافتها إلى المفضلة.",
-        security: [["bearerAuth" => []]],
-        tags: ["Favorites"],
+        path: '/api/favorites',
+        summary: 'جلب قائمة الخدمات المفضلة للمستخدم',
+        description: 'يسترجع قائمة بجميع الخدمات التي قام المستخدم المسجل بإضافتها إلى المفضلة.',
+        security: [['bearerAuth' => []]],
+        tags: ['Favorites'],
         responses: [
             new OA\Response(
                 response: 200,
-                description: "تم جلب المفضلة بنجاح",
+                description: 'تم جلب المفضلة بنجاح',
                 content: new OA\JsonContent(
                     properties: [
-                        new OA\Property(property: "status", type: "boolean", example: true),
+                        new OA\Property(property: 'status', type: 'boolean', example: true),
                         new OA\Property(
-                            property: "data",
-                            type: "array",
+                            property: 'data',
+                            type: 'array',
                             items: new OA\Items(
                                 properties: [
-                                    new OA\Property(property: "id", type: "integer", example: 1),
-                                    new OA\Property(property: "service_id", type: "integer", example: 5),
-                                    new OA\Property(property: "title", type: "string", example: "صالة أورنا"),
-                                    new OA\Property(property: "price", type: "number", format: "float", example: 1400.00),
-                                    new OA\Property(property: "currency", type: "string", example: "ILS"),
-                                    new OA\Property(property: "image", type: "string", nullable: true, example: "services/hall_orna.jpg"),
-                                    new OA\Property(property: "rating_avg", type: "number", format: "float", example: 4.8),
-                                    new OA\Property(property: "reviews_count", type: "integer", example: 19),
-                                    new OA\Property(property: "location", type: "string", example: "غزة - الرمال - شمال مطعم التايلندي"),
-                                    new OA\Property(property: "city", type: "string", example: "غزة"),
-                                    new OA\Property(property: "is_favorited", type: "boolean", example: true),
+                                    new OA\Property(property: 'id', type: 'integer', example: 1),
+                                    new OA\Property(property: 'service_id', type: 'integer', example: 5),
+                                    new OA\Property(property: 'title', type: 'string', example: 'صالة أورنا'),
+                                    new OA\Property(property: 'price', type: 'number', format: 'float', example: 1400.00),
+                                    new OA\Property(property: 'currency', type: 'string', example: 'ILS'),
+                                    new OA\Property(property: 'image', type: 'string', nullable: true, example: 'services/hall_orna.jpg'),
+                                    new OA\Property(property: 'rating_avg', type: 'number', format: 'float', example: 4.8),
+                                    new OA\Property(property: 'reviews_count', type: 'integer', example: 19),
+                                    new OA\Property(property: 'location', type: 'string', example: 'غزة - الرمال - شمال مطعم التايلندي'),
+                                    new OA\Property(property: 'city', type: 'string', example: 'غزة'),
+                                    new OA\Property(property: 'is_favorited', type: 'boolean', example: true),
                                     new OA\Property(
-                                        property: "category",
-                                        type: "object",
+                                        property: 'category',
+                                        type: 'object',
                                         properties: [
-                                            new OA\Property(property: "id", type: "integer", example: 1),
-                                            new OA\Property(property: "name", type: "string", example: "صالات")
+                                            new OA\Property(property: 'id', type: 'integer', example: 1),
+                                            new OA\Property(property: 'name', type: 'string', example: 'صالات'),
                                         ]
                                     ),
                                     new OA\Property(
-                                        property: "provider",
-                                        type: "object",
+                                        property: 'provider',
+                                        type: 'object',
                                         properties: [
-                                            new OA\Property(property: "id", type: "integer", example: 3),
-                                            new OA\Property(property: "name", type: "string", example: "صالة أورنا"),
-                                            new OA\Property(property: "avatar", type: "string", nullable: true, example: "providers/orna.jpg")
+                                            new OA\Property(property: 'id', type: 'integer', example: 3),
+                                            new OA\Property(property: 'name', type: 'string', example: 'صالة أورنا'),
+                                            new OA\Property(property: 'avatar', type: 'string', nullable: true, example: 'providers/orna.jpg'),
                                         ]
-                                    )
+                                    ),
                                 ]
                             )
-                        )
+                        ),
                     ]
                 )
             ),
             new OA\Response(
                 response: 401,
-                description: "غير مصرح (يرجى تسجيل الدخول)"
-            )
+                description: 'غير مصرح (يرجى تسجيل الدخول)'
+            ),
         ]
     )]
     public function index(Request $request)
@@ -84,13 +84,13 @@ class FavoriteController extends Controller
             'service.provider.locations.city',
             'service.images',
         ])
-        ->where('user_id', $user->id)
-        ->latest()
-        ->get();
+            ->where('user_id', $user->id)
+            ->latest()
+            ->get();
 
         $data = $favorites->map(function ($favorite) {
             $service = $favorite->service;
-            if (!$service) {
+            if (! $service) {
                 return null;
             }
 
@@ -99,7 +99,7 @@ class FavoriteController extends Controller
 
             $primaryLocation = $service->provider?->locations?->first();
             $locationText = $primaryLocation?->address
-                ? (($primaryLocation->city?->name ? $primaryLocation->city->name . ' - ' : '') . $primaryLocation->address)
+                ? (($primaryLocation->city?->name ? $primaryLocation->city->name.' - ' : '').$primaryLocation->address)
                 : ($service->city?->name ? $service->city->name : 'غزة');
 
             return [
@@ -136,40 +136,54 @@ class FavoriteController extends Controller
     }
 
     #[OA\Post(
-        path: "/api/favorites/toggle/{service_id}",
-        summary: "إضافة أو إزالة خدمة من المفضلة (Toggle)",
-        description: "يقوم بالتبديل بين إضافة الخدمة إلى المفضلة أو حذفها في حال كانت موجودة مسبقاً.",
-        security: [["bearerAuth" => []]],
-        tags: ["Favorites"],
+        path: '/api/favorites/toggle/{service_id}',
+        summary: 'إضافة أو إزالة خدمة من المفضلة (Toggle)',
+        description: 'يقوم بالتبديل بين إضافة الخدمة إلى المفضلة أو حذفها في حال كانت موجودة مسبقاً.',
+        security: [['bearerAuth' => []]],
+        tags: ['Favorites'],
         parameters: [
             new OA\Parameter(
-                name: "service_id",
-                in: "path",
-                description: "معرّف الخدمة المطلوب إضافتها أو إزالتها",
+                name: 'service_id',
+                in: 'path',
+                description: 'معرّف الخدمة المطلوب إضافتها أو إزالتها',
                 required: true,
-                schema: new OA\Schema(type: "integer", example: 1)
-            )
+                schema: new OA\Schema(type: 'integer', example: 1)
+            ),
         ],
         responses: [
             new OA\Response(
                 response: 200,
-                description: "تم تحديث حالة المفضلة بنجاح",
+                description: 'تم تحديث حالة المفضلة بنجاح',
                 content: new OA\JsonContent(
                     properties: [
-                        new OA\Property(property: "status", type: "boolean", example: true),
-                        new OA\Property(property: "is_favorited", type: "boolean", example: true),
-                        new OA\Property(property: "message", type: "string", example: "تمت إضافة الخدمة إلى المفضلة بنجاح")
+                        new OA\Property(property: 'status', type: 'boolean', example: true),
+                        new OA\Property(property: 'is_favorited', type: 'boolean', example: true),
+                        new OA\Property(property: 'message', type: 'string', example: 'تمت إضافة الخدمة إلى المفضلة بنجاح'),
                     ]
                 )
             ),
             new OA\Response(
                 response: 404,
-                description: "الخدمة غير موجودة"
+                description: 'الخدمة غير موجودة'
             ),
             new OA\Response(
                 response: 401,
-                description: "غير مصرح (يرجى تسجيل الدخول)"
-            )
+                description: 'غير مصرح (يرجى تسجيل الدخول)'
+            ),
+        ]
+    )]
+    #[OA\Post(
+        path: '/api/services/{id}/favorite',
+        summary: 'إضافة أو إزالة خدمة من المفضلة',
+        security: [['bearerAuth' => []]],
+        tags: ['Favorites'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'تم تحديث حالة المفضلة'),
+            new OA\Response(response: 401, description: 'غير مصرح'),
+            new OA\Response(response: 404, description: 'الخدمة غير موجودة'),
         ]
     )]
     public function toggle(Request $request, $serviceId)
