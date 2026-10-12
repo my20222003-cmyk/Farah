@@ -4,6 +4,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\EnsureActiveAccount;
+use App\Http\Middleware\CheckAdminIdleSession;
+use App\Http\Middleware\EnsureAdminRole;
 use App\Http\Middleware\EnsureCustomer;
 use App\Http\Middleware\EnsureProvider;
 use App\Http\Middleware\EnsureValidApiSignature;
@@ -24,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'account.active' => EnsureActiveAccount::class,
             'customer' => EnsureCustomer::class,
             'provider' => EnsureProvider::class,
+            'admin' => EnsureAdminRole::class,
+            'admin.idle' => CheckAdminIdleSession::class,
             'verified' => EnsureVerifiedEmail::class,
             'signed-api' => EnsureValidApiSignature::class,
         ]);

@@ -85,6 +85,10 @@ class FavoriteController extends Controller
             'service.images',
         ])
             ->where('user_id', $user->id)
+            ->whereHas('service', fn ($query) => $query
+                ->where('status', 'active')
+                ->where('is_available', true)
+                ->forApprovedProviders())
             ->latest()
             ->get();
 
@@ -191,7 +195,10 @@ class FavoriteController extends Controller
         $user = $request->user();
 
         // التأكد من وجود الخدمة
-        $service = Service::where('status', 'active')->findOrFail($serviceId);
+        $service = Service::where('status', 'active')
+            ->where('is_available', true)
+            ->forApprovedProviders()
+            ->findOrFail($serviceId);
 
         $favorite = Favorite::where('user_id', $user->id)
             ->where('service_id', $service->id)

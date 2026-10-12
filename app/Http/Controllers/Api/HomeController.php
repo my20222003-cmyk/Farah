@@ -230,6 +230,7 @@ class HomeController extends Controller
         $bannerServices = Service::with(['category', 'city', 'images'])
             ->where('status', 'active')
             ->where('is_available', true)
+            ->forApprovedProviders()
             ->where(function ($q) {
                 $q->where('is_featured', true)
                   ->orWhere('rating_avg', '>=', 4.0);
@@ -242,6 +243,7 @@ class HomeController extends Controller
             $bannerServices = Service::with(['category', 'city', 'images'])
                 ->where('status', 'active')
                 ->where('is_available', true)
+                ->forApprovedProviders()
                 ->latest()
                 ->limit(5)
                 ->get();
@@ -314,6 +316,7 @@ class HomeController extends Controller
         $featuredPackagesQuery = Service::with(['category', 'city', 'provider.providerProfile', 'images'])
             ->where('status', 'active')
             ->where('is_available', true)
+            ->forApprovedProviders()
             ->where('service_type', 'package')
             ->orderByDesc('rating_avg')
             ->limit(6)
@@ -323,6 +326,7 @@ class HomeController extends Controller
             $featuredPackagesQuery = Service::with(['category', 'city', 'provider.providerProfile', 'images'])
                 ->where('status', 'active')
                 ->where('is_available', true)
+                ->forApprovedProviders()
                 ->where('is_on_offer', true)
                 ->orderByDesc('rating_avg')
                 ->limit(6)
@@ -364,6 +368,7 @@ class HomeController extends Controller
             ->withCount(['bookings as confirmed_bookings_count' => fn ($query) => $query->whereIn('workflow_status', ['confirmed', 'completed'])])
             ->where('status', 'active')
             ->where('is_available', true)
+            ->forApprovedProviders()
             ->orderByDesc('confirmed_bookings_count')
             ->orderByDesc('rating_avg')
             ->limit(6)

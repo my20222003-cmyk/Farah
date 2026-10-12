@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\ProviderProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -12,7 +13,7 @@ class ProviderSubscriptionApiTest extends TestCase
 
     public function test_provider_can_view_subscription_plans(): void
     {
-        $provider = User::factory()->create(['user_type' => 'provider']);
+        $provider = $this->approvedProvider();
 
         $response = $this->actingAs($provider, 'sanctum')
             ->getJson('/api/provider/subscription-plans');
@@ -26,7 +27,7 @@ class ProviderSubscriptionApiTest extends TestCase
 
     public function test_first_provider_subscription_has_one_free_month(): void
     {
-        $provider = User::factory()->create(['user_type' => 'provider']);
+        $provider = $this->approvedProvider();
 
         $response = $this->actingAs($provider, 'sanctum')
             ->postJson('/api/provider/subscription', ['plan' => 'monthly']);
@@ -43,7 +44,7 @@ class ProviderSubscriptionApiTest extends TestCase
 
     public function test_free_month_is_not_granted_again_when_changing_plan(): void
     {
-        $provider = User::factory()->create(['user_type' => 'provider']);
+        $provider = $this->approvedProvider();
 
         $this->actingAs($provider, 'sanctum')
             ->postJson('/api/provider/subscription', ['plan' => 'monthly'])
@@ -65,5 +66,33 @@ class ProviderSubscriptionApiTest extends TestCase
         $this->actingAs($user, 'sanctum')
             ->getJson('/api/provider/subscription-plans')
             ->assertForbidden();
+    }
+
+    public function test_pending_provider_cannot_start_a_subscription(): void
+    {
+        $provider = User::factory()->create(['user_type' => 'provider']);
+        ProviderProfile::create([
+            'user_id' => $provider->id,
+            'business_name' => 'Pending provider',
+            'status' => 'pending',
+            'registration_status' => 'pending',
+        ]);
+
+        $this->actingAs($provider, 'sanctum')
+            ->postJson('/api/provider/subscription', ['plan' => 'monthly'])
+            ->assertForbidden();
+    }
+
+    private function approvedProvider(): User
+    {
+        $provider = User::factory()->create(['user_type' => 'provider', 'status' => 'active']);
+        ProviderProfile::create([
+            'user_id' => $provider->id,
+            'business_name' => 'Approved provider',
+            'status' => 'approved',
+            'registration_status' => 'approved',
+        ]);
+
+        return $provider;
     }
 }

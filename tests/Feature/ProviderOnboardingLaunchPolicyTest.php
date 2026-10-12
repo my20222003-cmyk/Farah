@@ -27,19 +27,19 @@ class ProviderOnboardingLaunchPolicyTest extends TestCase
         ]);
 
         $response->assertOk()
-            ->assertJsonPath('data.registration_status', 'approved')
-            ->assertJsonPath('data.status', 'approved');
+            ->assertJsonPath('data.registration_status', 'pending')
+            ->assertJsonPath('data.status', 'pending');
 
         $this->assertDatabaseHas('provider_profiles', [
             'user_id' => $provider->id,
-            'status' => 'approved',
-            'registration_status' => 'approved',
+            'status' => 'pending',
+            'registration_status' => 'pending',
         ]);
 
         $this->actingAs($provider, 'sanctum')
             ->getJson('/api/provider/verification')
             ->assertOk()
-            ->assertJsonPath('data.status', 'approved')
-            ->assertJsonPath('data.next_step', 'services');
+            ->assertJsonPath('data.status', 'pending')
+            ->assertJsonPath('data.next_step', 'wait');
     }
 }

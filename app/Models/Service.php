@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -64,6 +65,17 @@ class Service extends Model
     public function provider()
     {
         return $this->belongsTo(User::class, 'provider_id');
+    }
+
+    public function scopeForApprovedProviders(Builder $query): Builder
+    {
+        return $query->whereHas('provider', function (Builder $provider): void {
+            $provider->where('status', 'active')
+                ->whereHas('providerProfile', function (Builder $profile): void {
+                    $profile->where('status', 'approved')
+                        ->where('registration_status', 'approved');
+                });
+        });
     }
 
     public function category()

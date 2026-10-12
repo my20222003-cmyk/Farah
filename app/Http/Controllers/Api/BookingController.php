@@ -41,7 +41,7 @@ class BookingController extends Controller
 
         $booking = DB::transaction(function () use ($request, $id) {
             $service = Service::with(['images', 'items'])->lockForUpdate()
-                ->where('status', 'active')->where('is_available', true)->findOrFail($id);
+                ->where('status', 'active')->where('is_available', true)->forApprovedProviders()->findOrFail($id);
             $slot = $this->resolveSlot($service, $request->booking_time, $request->booking_slot);
 
             $dateBlocked = $service->unavailableDates()->whereDate('unavailable_date', $request->booking_date)->exists();

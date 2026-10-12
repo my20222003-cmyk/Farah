@@ -64,6 +64,7 @@ class ProviderServiceManager
         return array_merge([
             'status' => $status,
             'profile_id' => $profile->id,
+            'decision_reason' => $profile->decision_reason,
             'has_identity_document' => (bool) $profile->identity_document_path,
             'has_commercial_register' => (bool) $profile->commercial_register_path,
         ], $statusData);
@@ -96,8 +97,8 @@ class ProviderServiceManager
                 ] : null,
                 'address' => $user->locations->first()?->address,
                 'cover_image' => $this->publicUrl($profile->cover_image),
-                'identity_document' => $this->publicUrl($profile->identity_document_path),
-                'commercial_register' => $this->publicUrl($profile->commercial_register_path),
+                'identity_document' => null,
+                'commercial_register' => null,
                 'registration_status' => $profile->registration_status,
             ] : null,
         ];
@@ -107,18 +108,23 @@ class ProviderServiceManager
     {
         return DB::transaction(function () use ($user, $data, $files) {
             $profile = ProviderProfile::firstOrNew(['user_id' => $user->id]);
+            abort_unless(! in_array($profile->status, ['approved', 'suspended'], true), 409, 'لا يمكن إعادة إرسال بيانات التوثيق لحساب معتمد أو موقوف.');
             $profile->fill(collect($data)->only([
                 'business_name', 'category_id', 'city_id', 'description',
             ])->all());
-            // Temporary launch policy: a completed provider onboarding is activated
-            // immediately. Admin approval/rejection will be introduced with the
-            // administration module in a later release.
-            $profile->status = 'approved';
-            $profile->registration_status = 'approved';
+            // After admin panel sprint Phase 1, onboarding requires explicit
+            // administrative approval. Mark new onboarding as pending so an
+            // admin can review documents and approve or reject.
+            $profile->status = 'pending';
+            $profile->registration_status = 'pending';
 
-            $this->replaceFile($profile, 'identity_document_path', $files['identity_document'] ?? null, 'provider-documents');
-            $this->replaceFile($profile, 'commercial_register_path', $files['commercial_register'] ?? null, 'provider-documents');
-            $this->replaceFile($profile, 'cover_image', $files['cover_image'] ?? null, 'provider-covers');
+            $profile->submitted_at = now();
+            $profile->escalated_at = null;
+            $profile->decided_at = null;
+            $profile->decision_reason = null;
+            $this->replaceFile($profile, 'identity_document_path', $files['identity_document'] ?? null, 'provider-documents', 'local');
+            $this->replaceFile($profile, 'commercial_register_path', $files['commercial_register'] ?? null, 'provider-documents', 'local');
+            $this->replaceFile($profile, 'cover_image', $files['cover_image'] ?? null, 'provider-covers', 'public');
             $profile->save();
 
             $user->update([
@@ -193,12 +199,12 @@ class ProviderServiceManager
 
     public function createService(User $user, array $data, ?UploadedFile $image = null, array $images = []): Service
     {
+        $this->ensureProviderApproved($user);
+
         $data['provider_id'] = $user->id;
         $data['city_id'] = $data['city_id'] ?? $user->city_id;
         $data['category_id'] = $data['category_id'] ?? $user->providerProfile?->category_id;
         $data['currency'] = $data['currency'] ?? 'ILS';
-        // Launch policy: provider onboarding is auto-approved, therefore
-        // newly submitted services are immediately available to customers.
         $data['status'] = 'active';
         $data['is_available'] = $data['is_available'] ?? true;
         $data['image'] = $image?->store('services', 'public');
@@ -212,6 +218,8 @@ class ProviderServiceManager
 
     public function updateService(User $user, int $serviceId, array $data, ?UploadedFile $image = null, array $images = []): Service
     {
+        $this->ensureProviderApproved($user);
+
         $service = $user->services()->findOrFail($serviceId);
         if ($image) {
             $this->deleteFile($service->image);
@@ -239,6 +247,10 @@ class ProviderServiceManager
 
     public function updateVisibility(User $user, int $serviceId, bool $isAvailable): Service
     {
+        if ($isAvailable) {
+            $this->ensureProviderApproved($user);
+        }
+
         $service = $user->services()->findOrFail($serviceId);
         $service->update(['is_available' => $isAvailable]);
 
@@ -315,26 +327,44 @@ class ProviderServiceManager
         ];
     }
 
-    private function replaceFile(ProviderProfile $profile, string $attribute, ?UploadedFile $file, string $directory): void
+    private function replaceFile(ProviderProfile $profile, string $attribute, ?UploadedFile $file, string $directory, string $disk = 'public'): void
     {
         if (! $file) {
             return;
         }
 
-        $this->deleteFile($profile->{$attribute});
-        $profile->{$attribute} = $file->store($directory, 'public');
+        $disks = $directory === 'provider-documents' ? ['local', 'public'] : ['public'];
+        $this->deleteFile($profile->{$attribute}, $disks);
+        $profile->{$attribute} = $file->store($directory, $disk);
     }
 
-    private function deleteFile(?string $path): void
+    private function deleteFile(?string $path, array $disks = ['public']): void
     {
-        if ($path && Storage::disk('public')->exists($path)) {
-            Storage::disk('public')->delete($path);
+        if (! $path) {
+            return;
+        }
+
+        foreach ($disks as $disk) {
+            if (Storage::disk($disk)->exists($path)) {
+                Storage::disk($disk)->delete($path);
+            }
         }
     }
 
     private function publicUrl(?string $path): ?string
     {
         return $path ? Storage::url($path) : null;
+    }
+
+    private function ensureProviderApproved(User $user): void
+    {
+        abort_unless(
+            $user->status === 'active'
+                && $user->providerProfile?->status === 'approved'
+                && $user->providerProfile?->registration_status === 'approved',
+            403,
+            'لا يمكن نشر الخدمات قبل اعتماد حساب مزود الخدمة.'
+        );
     }
 
     private function syncServiceImages(Service $service, array $images): void

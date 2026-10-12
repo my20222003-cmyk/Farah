@@ -199,7 +199,7 @@ class ServiceController extends Controller
             'provider.providerProfile',
             'provider.locations.city',
             'images'
-        ])->where('status', 'active')->where('is_available', true);
+        ])->where('status', 'active')->where('is_available', true)->forApprovedProviders();
 
         // 1. الفلترة حسب التصنيف (ID أو Slug)
         $categoryId = $request->category_id ?? $request->route('id');
@@ -399,7 +399,7 @@ class ServiceController extends Controller
             return response()->json(['icon' => 'error', 'title' => 'اختر خدمتين إلى ثلاث خدمات للمقارنة.'], 422);
         }
 
-        $services = Service::with(['category', 'images', 'items'])->whereIn('id', $ids)->where('status', 'active')->get();
+        $services = Service::with(['category', 'images', 'items'])->whereIn('id', $ids)->where('status', 'active')->forApprovedProviders()->get();
         if ($services->count() !== $ids->count() || $services->pluck('category_id')->unique()->count() !== 1) {
             return response()->json(['icon' => 'error', 'title' => 'يمكن مقارنة خدمات نشطة من التصنيف نفسه فقط.'], 422);
         }
@@ -530,6 +530,7 @@ class ServiceController extends Controller
         ])
         ->where('status', 'active')
         ->where('is_available', true)
+        ->forApprovedProviders()
         ->findOrFail($id);
 
         $isFavorited = false;
@@ -646,6 +647,7 @@ class ServiceController extends Controller
         $service = Service::with(['provider.providerProfile', 'unavailableDates'])
             ->where('status', 'active')
             ->where('is_available', true)
+            ->forApprovedProviders()
             ->findOrFail($id);
 
         $month = $request->filled('month')
@@ -744,7 +746,7 @@ class ServiceController extends Controller
     )]
     public function bookingPreview(CreateBookingRequest $request, $id)
     {
-        $service = Service::with('images')->where('status', 'active')->findOrFail($id);
+        $service = Service::with('images')->where('status', 'active')->forApprovedProviders()->findOrFail($id);
         $slot = $this->resolveBookingSlot($service, $request);
 
         $dateBlocked = $service->unavailableDates()->whereDate('unavailable_date', $request->booking_date)->exists();
@@ -786,7 +788,7 @@ class ServiceController extends Controller
     )]
     public function storeReview(CreateReviewRequest $request, $id)
     {
-        $service = Service::where('status', 'active')->findOrFail($id);
+        $service = Service::where('status', 'active')->forApprovedProviders()->findOrFail($id);
 
         $booking = Booking::where('id', $request->booking_id)
             ->where('user_id', $request->user()->id)

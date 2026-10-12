@@ -26,6 +26,10 @@ class ProviderProfile extends Model
         'payment_instructions',
         'status',
         'registration_status',
+        'submitted_at',
+        'escalated_at',
+        'decided_at',
+        'decision_reason',
         'is_featured',
         'rating',
         'working_hours',
@@ -35,6 +39,9 @@ class ProviderProfile extends Model
         'is_featured' => 'boolean',
         'rating' => 'float',
         'working_hours' => 'array',
+        'submitted_at' => 'datetime',
+        'escalated_at' => 'datetime',
+        'decided_at' => 'datetime',
     ];
 
     public function user()

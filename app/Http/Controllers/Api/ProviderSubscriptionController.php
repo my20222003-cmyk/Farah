@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProviderSubscription;
+use App\Models\ProviderProfile;
 use App\Models\SubscriptionPlan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -60,16 +61,21 @@ class ProviderSubscriptionController extends Controller
         $provider = $request->user();
         $now = Carbon::now();
 
-        if ($provider->providerSubscriptions()->exists()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'تم استخدام الشهر المجاني مسبقًا. ستتوفر الباقات المدفوعة في تحديث لاحق.',
-            ], 409);
-        }
+        abort_unless(
+            $provider->status === 'active'
+                && ProviderProfile::where('user_id', $provider->id)->where('status', 'approved')->where('registration_status', 'approved')->exists(),
+            403,
+            'يجب اعتماد حساب مزود الخدمة قبل تفعيل الاشتراك.'
+        );
 
         $subscription = DB::transaction(function () use ($provider, $trialPlan, $now) {
+            $lockedProvider = $provider->newQuery()->whereKey($provider->id)->lockForUpdate()->firstOrFail();
+            if ($lockedProvider->providerSubscriptions()->exists()) {
+                return null;
+            }
+
             $trialEndsAt = $now->copy()->addMonthNoOverflow();
-            return $provider->providerSubscriptions()->create([
+            return $lockedProvider->providerSubscriptions()->create([
                 'subscription_plan_id' => $trialPlan->id,
                 'status' => 'trialing',
                 'trial_ends_at' => $trialEndsAt,
@@ -77,6 +83,13 @@ class ProviderSubscriptionController extends Controller
                 'current_period_end' => $trialEndsAt,
             ]);
         });
+
+        if (! $subscription) {
+            return response()->json([
+                'status' => false,
+                'message' => 'تم استخدام الشهر المجاني مسبقًا. ستتوفر الباقات المدفوعة في تحديث لاحق.',
+            ], 409);
+        }
 
         return response()->json([
             'status' => true,

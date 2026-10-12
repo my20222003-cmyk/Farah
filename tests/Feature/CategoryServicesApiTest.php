@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Category;
 use App\Models\City;
 use App\Models\Favorite;
+use App\Models\ProviderProfile;
 use App\Models\Service;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,6 +28,7 @@ class CategoryServicesApiTest extends TestCase
             'user_type' => 'provider',
             'city_id' => $city->id,
         ]);
+        $this->approveProvider($provider);
 
         $service = Service::create([
             'provider_id' => $provider->id,
@@ -82,6 +84,7 @@ class CategoryServicesApiTest extends TestCase
         ]);
 
         $provider = User::factory()->create(['user_type' => 'provider']);
+        $this->approveProvider($provider);
 
         Service::create([
             'provider_id' => $provider->id,
@@ -118,6 +121,7 @@ class CategoryServicesApiTest extends TestCase
     {
         $user = User::factory()->create();
         $provider = User::factory()->create(['user_type' => 'provider']);
+        $this->approveProvider($provider);
         $service = Service::create([
             'provider_id' => $provider->id,
             'title' => 'صالة أورنا',
@@ -168,6 +172,56 @@ class CategoryServicesApiTest extends TestCase
         $this->assertDatabaseMissing('favorites', [
             'user_id' => $user->id,
             'service_id' => $service->id,
+        ]);
+    }
+
+    public function test_pending_provider_services_are_not_public_or_bookable(): void
+    {
+        $provider = User::factory()->create(['user_type' => 'provider']);
+        ProviderProfile::create([
+            'user_id' => $provider->id,
+            'business_name' => 'Pending Provider',
+            'status' => 'pending',
+            'registration_status' => 'pending',
+        ]);
+        $service = Service::create([
+            'provider_id' => $provider->id,
+            'title' => 'Unapproved service',
+            'price' => 100,
+            'status' => 'active',
+            'is_available' => true,
+        ]);
+        $customer = User::factory()->create(['user_type' => 'customer']);
+
+        $this->getJson('/api/services')
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+
+        $this->getJson("/api/services/{$service->id}")
+            ->assertNotFound();
+
+        $this->actingAs($customer, 'sanctum')
+            ->postJson("/api/services/{$service->id}/bookings", [
+                'booking_date' => now()->addDays(2)->toDateString(),
+                'booking_time' => '17:00',
+            ])
+            ->assertNotFound();
+
+        $this->actingAs($provider, 'sanctum')
+            ->postJson('/api/provider/services', [
+                'title' => 'Another unapproved service',
+                'price' => 100,
+            ])
+            ->assertForbidden();
+    }
+
+    private function approveProvider(User $provider): void
+    {
+        ProviderProfile::create([
+            'user_id' => $provider->id,
+            'business_name' => $provider->name,
+            'status' => 'approved',
+            'registration_status' => 'approved',
         ]);
     }
 }
