@@ -1,62 +1,53 @@
 @extends('admin.layout')
 
-@section('title', 'Providers')
+@section('title', 'إدارة المزودين')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>All providers</h2>
-    <a href="{{ route('admin.providers.pending') }}" class="btn btn-outline-primary">Pending approvals</a>
-</div>
+<section class="page-heading">
+    <div><h1>إدارة مزودي الخدمات</h1><p>ابحث عن المزودين وتابع حالة حساباتهم.</p></div>
+    <a href="{{ route('admin.providers.pending') }}" class="btn btn-outline-primary"><i class="fa-solid fa-user-clock ms-2"></i>طلبات بانتظار المراجعة</a>
+</section>
 
-<form method="GET" class="row g-2 mb-3">
-    <div class="col-md-5">
-        <input type="search" name="search" value="{{ $filters['search'] ?? '' }}" class="form-control" placeholder="Business, owner, or email">
+<form method="GET" class="card card-body mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-5"><label class="form-label small fw-bold">بحث</label><input type="search" name="search" value="{{ $filters['search'] ?? '' }}" class="form-control" placeholder="اسم النشاط، المزود أو البريد الإلكتروني"></div>
+        <div class="col-md-3"><label class="form-label small fw-bold">الحالة</label>
+            <select name="status" class="form-select">
+                <option value="">كل الحالات</option>
+                @foreach(['pending' => 'قيد المراجعة', 'approved' => 'معتمد', 'rejected' => 'مرفوض', 'suspended' => 'موقوف'] as $status => $label)
+                    <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-2"><label class="form-label small fw-bold">التصنيف</label>
+            <select name="category_id" class="form-select"><option value="">كل التصنيفات</option>
+                @foreach($categories as $category)<option value="{{ $category->id }}" @selected((string) ($filters['category_id'] ?? '') === (string) $category->id)>{{ $category->name }}</option>@endforeach
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2"><button class="btn btn-primary flex-fill"><i class="fa-solid fa-magnifying-glass ms-1"></i>بحث</button><a href="{{ route('admin.providers') }}" class="btn btn-outline-primary">مسح</a></div>
     </div>
-    <div class="col-md-3">
-        <select name="status" class="form-select">
-            <option value="">All statuses</option>
-            @foreach(['pending', 'approved', 'rejected', 'suspended'] as $status)
-                <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ ucfirst($status) }}</option>
-            @endforeach
-        </select>
-    </div>
-    <div class="col-md-3">
-        <select name="category_id" class="form-select">
-            <option value="">All categories</option>
-            @foreach($categories as $category)
-                <option value="{{ $category->id }}" @selected((string) ($filters['category_id'] ?? '') === (string) $category->id)>{{ $category->name }}</option>
-            @endforeach
-        </select>
-    </div>
-    <div class="col-auto"><button class="btn btn-primary">Filter</button></div>
-    <div class="col-auto"><a href="{{ route('admin.providers') }}" class="btn btn-outline-secondary">Clear</a></div>
 </form>
 
 <div class="card">
-    <div class="card-body p-0">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Business</th>
-                    <th>User</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>النشاط التجاري</th><th>اسم المزود</th><th>البريد الإلكتروني</th><th>الحالة</th><th></th></tr></thead>
             <tbody>
-                @forelse($providers as $provider)
-                    <tr>
-                        <td>{{ $provider->business_name ?? '—' }}</td>
-                        <td>{{ $provider->user?->name ?? '—' }}</td>
-                        <td><span class="badge bg-warning text-dark">{{ $provider->status }}</span></td>
-                        <td><a href="{{ route('admin.provider.detail', $provider) }}" class="btn btn-sm btn-primary">Detail</a></td>
-                    </tr>
-                @empty
-                    <tr><td colspan="4" class="p-4 text-center text-muted">No providers found.</td></tr>
-                @endforelse
+            @forelse($providers as $provider)
+                @php($statusLabels = ['pending' => 'قيد المراجعة', 'approved' => 'معتمد', 'rejected' => 'مرفوض', 'suspended' => 'موقوف'])
+                <tr>
+                    <td class="fw-bold">{{ $provider->business_name ?? '—' }}</td>
+                    <td>{{ $provider->user?->name ?? '—' }}</td>
+                    <td>{{ $provider->user?->email ?? '—' }}</td>
+                    <td><span class="badge {{ $provider->status === 'approved' ? 'text-bg-success' : ($provider->status === 'rejected' || $provider->status === 'suspended' ? 'text-bg-danger' : 'text-bg-warning') }}">{{ $statusLabels[$provider->status] ?? $provider->status }}</span></td>
+                    <td><a href="{{ route('admin.provider.detail', $provider) }}" class="btn btn-sm btn-outline-primary">عرض الملف <i class="fa-solid fa-arrow-left me-1"></i></a></td>
+                </tr>
+            @empty
+                <tr><td colspan="5" class="p-5 text-center text-muted"><i class="fa-regular fa-folder-open fs-4 d-block mb-2"></i>لا توجد نتائج مطابقة.</td></tr>
+            @endforelse
             </tbody>
         </table>
     </div>
 </div>
-{{ $providers->links() }}
+<div class="mt-3">{{ $providers->links() }}</div>
 @endsection

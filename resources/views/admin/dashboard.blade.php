@@ -1,61 +1,96 @@
 @extends('admin.layout')
 
-@section('title', 'Admin Dashboard')
+@section('title', 'نظرة عامة')
+
+@php
+    $statLabels = [
+        'active_users' => 'المستخدمون النشطون',
+        'providers_pending' => 'طلبات بانتظار المراجعة',
+        'approved_providers' => 'المزودون المعتمدون',
+        'providers' => 'إجمالي المزودين',
+        'bookings' => 'إجمالي الحجوزات',
+        'payment_proofs_pending' => 'إثباتات دفع بانتظار المراجعة',
+    ];
+    $statIcons = [
+        'active_users' => 'fa-user-group',
+        'providers_pending' => 'fa-user-clock',
+        'approved_providers' => 'fa-user-check',
+        'providers' => 'fa-briefcase',
+        'bookings' => 'fa-calendar-check',
+        'payment_proofs_pending' => 'fa-money-check-dollar',
+    ];
+    $greeting = now()->hour < 12 ? 'صباح الخير' : 'مساء الخير';
+@endphp
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
+<section class="page-heading">
     <div>
-        <h2 class="mb-1">Admin dashboard</h2>
-        <p class="text-muted mb-0">Operations overview</p>
+        <h1>{{ $greeting }}، {{ auth()->user()->name }}</h1>
+        <p>إليك ملخص العمل والطلبات التي تحتاج إلى متابعة.</p>
     </div>
-    <span class="badge bg-success">{{ $role }}</span>
-</div>
+    <span class="badge text-bg-light border text-secondary px-3 py-2">
+        <i class="fa-solid fa-circle-user ms-1"></i>
+        {{ ['ops.moderator' => 'مشرف العمليات', 'finance.reviewer' => 'مراجع مالي', 'system.admin' => 'مدير النظام'][$role] ?? 'مدير' }}
+    </span>
+</section>
 
-<div class="row g-4 mb-4">
-    @foreach ($stats as $key => $value)
-        <div class="col-md-3">
-            <div class="card stat-card h-100">
-                <div class="card-body">
-                    <div class="text-uppercase text-muted small">{{ str_replace('_', ' ', $key) }}</div>
-                    <div class="display-6 fw-bold mt-2">{{ $value }}</div>
+<div class="row g-3 mb-4">
+    @foreach($stats as $key => $value)
+        <div class="col-6 col-xl-3">
+            <article class="card h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small mb-2">{{ $statLabels[$key] ?? $key }}</div>
+                        <div class="fs-3 fw-bold">{{ number_format($value) }}</div>
+                    </div>
+                    <span class="identity-avatar"><i class="fa-solid {{ $statIcons[$key] ?? 'fa-chart-simple' }}"></i></span>
                 </div>
-            </div>
+            </article>
         </div>
     @endforeach
 </div>
 
-<div class="row g-4">
+<div class="row g-3">
     @if(in_array($role, ['ops.moderator', 'system.admin'], true))
         <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Provider approval queue</h5>
-                    <p class="text-muted">{{ $providerPending }} provider requests awaiting decision.</p>
-                    <a href="{{ route('admin.providers.pending') }}" class="btn btn-primary">View pending providers</a>
+            <article class="card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div><span class="text-muted small">العمليات</span><h5 class="fw-bold mt-1 mb-2">طلبات اعتماد المزودين</h5></div>
+                        <span class="identity-avatar"><i class="fa-solid fa-user-check"></i></span>
+                    </div>
+                    <p class="text-muted mb-3">لديك <strong class="text-dark">{{ number_format($providerPending) }}</strong> طلبات تنتظر المراجعة.</p>
+                    <a href="{{ route('admin.providers.pending') }}" class="btn btn-primary"><i class="fa-solid fa-arrow-left ms-2"></i>عرض الطلبات</a>
                 </div>
-            </div>
+            </article>
         </div>
     @endif
     @if(in_array($role, ['finance.reviewer', 'system.admin'], true))
         <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Payment proof queue</h5>
-                    <p class="text-muted">{{ $stats['payment_proofs_pending'] }} payment proofs awaiting review.</p>
-                    <a href="{{ route('admin.finance.payments') }}" class="btn btn-primary">Review payments</a>
+            <article class="card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div><span class="text-muted small">المالية</span><h5 class="fw-bold mt-1 mb-2">مراجعة إثباتات الدفع</h5></div>
+                        <span class="identity-avatar"><i class="fa-solid fa-receipt"></i></span>
+                    </div>
+                    <p class="text-muted mb-3">عدد الإثباتات المعلقة: <strong class="text-dark">{{ number_format($stats['payment_proofs_pending'] ?? 0) }}</strong>.</p>
+                    <a href="{{ route('admin.finance.payments') }}" class="btn btn-primary"><i class="fa-solid fa-arrow-left ms-2"></i>مراجعة الدفعات</a>
                 </div>
-            </div>
+            </article>
         </div>
     @endif
     @if($role === 'system.admin')
         <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Audit activity</h5>
-                    <p class="text-muted">Review recorded administrative actions.</p>
-                    <a href="{{ route('admin.audit-log') }}" class="btn btn-outline-secondary">Open audit log</a>
+            <article class="card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div><span class="text-muted small">الرقابة</span><h5 class="fw-bold mt-1 mb-2">سجل العمليات الإدارية</h5></div>
+                        <span class="identity-avatar"><i class="fa-solid fa-clipboard-list"></i></span>
+                    </div>
+                    <p class="text-muted mb-3">تابع تغييرات الفريق وسجل القرارات والتعديلات.</p>
+                    <a href="{{ route('admin.audit-log') }}" class="btn btn-outline-primary"><i class="fa-solid fa-arrow-left ms-2"></i>فتح سجل التدقيق</a>
                 </div>
-            </div>
+            </article>
         </div>
     @endif
 </div>

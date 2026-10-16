@@ -75,6 +75,9 @@ class Service extends Model
                     $profile->where('status', 'approved')
                         ->where('registration_status', 'approved');
                 });
+        })->where('admin_hidden', false)->where(function (Builder $category): void {
+            $category->whereNull('category_id')
+                ->orWhereHas('category', fn (Builder $category) => $category->where('status', 'active'));
         });
     }
 
@@ -95,7 +98,7 @@ class Service extends Model
 
     public function reviews()
     {
-        return $this->hasMany(Review::class);
+        return $this->hasMany(Review::class)->where('is_visible', true);
     }
 
     public function favorites()

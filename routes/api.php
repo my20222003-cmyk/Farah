@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\NotificationSettingController;
 use App\Http\Controllers\Api\ProviderController;
 use App\Http\Controllers\Api\ProviderSubscriptionController;
+use App\Http\Controllers\Api\PublicSettingsController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/settings', PublicSettingsController::class);
     Route::get('/cities', [CityController::class, 'index']);
     Route::get('/home', [HomeController::class, 'index']);
     Route::get('/categories', [CategoryController::class, 'index']);

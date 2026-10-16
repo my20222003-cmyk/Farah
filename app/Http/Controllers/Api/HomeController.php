@@ -281,6 +281,10 @@ class HomeController extends Controller
                 $q->where('status', 'approved')
                   ->orWhereNull('status');
             })
+            ->where(function ($query): void {
+                $query->whereNull('category_id')
+                    ->orWhereHas('category', fn ($category) => $category->where('status', 'active'));
+            })
             ->orderByDesc('is_featured')
             ->orderByDesc('rating')
             ->get()

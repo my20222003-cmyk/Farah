@@ -300,6 +300,7 @@ class ProviderServiceManager
     public function reviews(User $user)
     {
         return Review::with(['user:id,name,avatar', 'service:id,title,image'])
+            ->where('is_visible', true)
             ->whereIn('service_id', $user->services()->select('id'))->latest()->paginate(20);
     }
 

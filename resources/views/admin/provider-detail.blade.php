@@ -1,79 +1,77 @@
 @extends('admin.layout')
 
-@section('title', 'Provider Review')
+@section('title', 'ملف المزود')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2>{{ $provider->business_name }}</h2>
-        <p class="text-muted mb-0">Submitted by {{ $provider->user?->name }}</p>
-    </div>
-    <div class="d-flex gap-2 flex-wrap">
-        @if(in_array(auth()->user()->getRoleNames()->first(), ['ops.moderator', 'system.admin'], true) && $provider->status === 'pending')
-            <form method="POST" action="{{ route('admin.provider.approve', $provider) }}">@csrf <button class="btn btn-success" type="submit">Approve</button></form>
-        @endif
-        @if(in_array(auth()->user()->getRoleNames()->first(), ['ops.moderator', 'system.admin'], true) && $provider->status === 'pending')
-            <form method="POST" action="{{ route('admin.provider.reject', $provider) }}" class="d-flex gap-2 align-items-center">@csrf <input type="text" name="reason" class="form-control" placeholder="Rejection reason" required> <button class="btn btn-danger" type="submit">Reject</button></form>
-        @endif
-        @if(auth()->user()->hasAnyRole(['ops.moderator', 'system.admin']) && $provider->status === 'approved')
-            <form method="POST" action="{{ route('admin.provider.suspend', $provider) }}" class="d-flex gap-2">@csrf <input name="reason" class="form-control" placeholder="Suspension reason" required> <button class="btn btn-warning" type="submit">Suspend</button></form>
-        @endif
-        @if(auth()->user()->hasAnyRole(['ops.moderator', 'system.admin']) && $provider->status === 'suspended')
-            <form method="POST" action="{{ route('admin.provider.reactivate', $provider) }}" class="d-flex gap-2">@csrf <input name="reason" class="form-control" placeholder="Reactivation reason" required> <button class="btn btn-outline-success" type="submit">Reactivate</button></form>
-        @endif
-    </div>
-</div>
+<section class="page-heading">
+    <div><h1>{{ $provider->business_name }}</h1><p>مقدم الطلب: {{ $provider->user?->name ?? '—' }} · {{ $provider->user?->email ?? '—' }}</p></div>
+    <a href="{{ route('admin.providers.pending') }}" class="btn btn-outline-primary"><i class="fa-solid fa-arrow-right ms-2"></i>العودة للطلبات</a>
+</section>
 
-<div class="row g-4">
-    <div class="col-lg-6">
-        <div class="card h-100">
-            <div class="card-body">
-                <h5 class="card-title">Provider details</h5>
-                <dl class="row mt-3 mb-0">
-                    <dt class="col-sm-4">Email</dt><dd class="col-sm-8">{{ $provider->user?->email }}</dd>
-                    <dt class="col-sm-4">Phone</dt><dd class="col-sm-8">{{ $provider->phone ?? '—' }}</dd>
-                    <dt class="col-sm-4">Category</dt><dd class="col-sm-8">{{ $provider->category?->name ?? '—' }}</dd>
-                    <dt class="col-sm-4">Status</dt><dd class="col-sm-8"><span class="badge bg-secondary">{{ $provider->status }}</span></dd>
-                    <dt class="col-sm-4">City</dt><dd class="col-sm-8">{{ $provider->city?->name ?? '—' }}</dd>
-                    <dt class="col-sm-4">Decision</dt><dd class="col-sm-8">{{ $provider->decision_reason ?: 'No decision recorded yet.' }}</dd>
+<div class="row g-3 mb-3">
+    <div class="col-lg-7">
+        <section class="card h-100">
+            <div class="card-body p-4">
+                <h2 class="h6 fw-bold mb-3"><i class="fa-regular fa-id-card ms-2 text-secondary"></i>بيانات المزود</h2>
+                <dl class="row mb-0 small">
+                    <dt class="col-sm-3 text-muted py-2">البريد الإلكتروني</dt><dd class="col-sm-9 py-2">{{ $provider->user?->email ?? '—' }}</dd>
+                    <dt class="col-sm-3 text-muted py-2">رقم الهاتف</dt><dd class="col-sm-9 py-2">{{ $provider->phone ?? '—' }}</dd>
+                    <dt class="col-sm-3 text-muted py-2">التصنيف</dt><dd class="col-sm-9 py-2">{{ $provider->category?->name ?? '—' }}</dd>
+                    <dt class="col-sm-3 text-muted py-2">المدينة</dt><dd class="col-sm-9 py-2">{{ $provider->city?->name ?? '—' }}</dd>
+                    <dt class="col-sm-3 text-muted py-2">الحالة</dt><dd class="col-sm-9 py-2">
+                        @php($statusLabels = ['pending' => 'قيد المراجعة', 'approved' => 'معتمد', 'rejected' => 'مرفوض', 'suspended' => 'موقوف'])
+                        <span class="badge text-bg-light border">{{ $statusLabels[$provider->status] ?? $provider->status }}</span>
+                    </dd>
+                    @if($provider->decision_reason)<dt class="col-sm-3 text-muted py-2">ملاحظة القرار</dt><dd class="col-sm-9 py-2">{{ $provider->decision_reason }}</dd>@endif
                 </dl>
             </div>
-        </div>
+        </section>
     </div>
-    <div class="col-lg-6">
-        <div class="card h-100">
-            <div class="card-body">
-                <h5 class="card-title">Business description</h5>
-                <p class="mb-0">{{ $provider->description ?: 'No description provided.' }}</p>
+    <div class="col-lg-5">
+        <section class="card h-100">
+            <div class="card-body p-4">
+                <h2 class="h6 fw-bold mb-3"><i class="fa-regular fa-file-lines ms-2 text-secondary"></i>نبذة النشاط</h2>
+                <p class="text-secondary mb-0">{{ $provider->description ?: 'لم يضف المزود وصفاً للنشاط.' }}</p>
             </div>
-        </div>
+        </section>
     </div>
 </div>
 
-<div class="row g-4 mt-1">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Identity document</h5>
-                @if($provider->identity_document_path)
-                    <a href="{{ Illuminate\Support\Facades\URL::temporarySignedRoute('admin.provider.document', now()->addMinutes(5), ['provider' => $provider->id, 'document' => 'identity_document']) }}" class="btn btn-sm btn-outline-primary mb-2" target="_blank" rel="noopener">Open secure document (5 min)</a>
+<div class="row g-3 mb-3">
+    @foreach([
+        ['title' => 'وثيقة الهوية', 'path' => $provider->identity_document_path, 'key' => 'identity_document'],
+        ['title' => 'السجل التجاري', 'path' => $provider->commercial_register_path, 'key' => 'commercial_register'],
+    ] as $document)
+        <div class="col-md-6">
+            <section class="card h-100"><div class="card-body p-4 d-flex align-items-center justify-content-between gap-3">
+                <div><h2 class="h6 fw-bold mb-1">{{ $document['title'] }}</h2><div class="small text-muted">{{ $document['path'] ? 'مرفق محفوظ بوصول خاص' : 'لم يتم إرفاق مستند' }}</div></div>
+                @if($document['path'])
+                    <a href="{{ Illuminate\Support\Facades\URL::temporarySignedRoute('admin.provider.document', now()->addMinutes(5), ['provider' => $provider->id, 'document' => $document['key']]) }}" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square ms-1"></i>فتح آمن · ٥ دقائق</a>
                 @else
-                    <p class="text-muted mb-0">No document uploaded.</p>
+                    <span class="text-muted"><i class="fa-regular fa-file"></i></span>
                 @endif
-            </div>
+            </div></section>
         </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Commercial register</h5>
-                @if($provider->commercial_register_path)
-                    <a href="{{ Illuminate\Support\Facades\URL::temporarySignedRoute('admin.provider.document', now()->addMinutes(5), ['provider' => $provider->id, 'document' => 'commercial_register']) }}" class="btn btn-sm btn-outline-primary mb-2" target="_blank" rel="noopener">Open secure document (5 min)</a>
-                @else
-                    <p class="text-muted mb-0">No document uploaded.</p>
-                @endif
-            </div>
-        </div>
-    </div>
+    @endforeach
 </div>
+
+@if(auth()->user()->hasAnyRole(['ops.moderator', 'system.admin']))
+    <section class="card">
+        <div class="card-body p-4">
+            <h2 class="h6 fw-bold mb-3">إجراءات المراجعة</h2>
+            <div class="d-flex flex-wrap gap-2 align-items-start">
+                @if($provider->status === 'pending')
+                    <form method="POST" action="{{ route('admin.provider.approve', $provider) }}">@csrf<button class="btn btn-success"><i class="fa-solid fa-check ms-2"></i>اعتماد المزود</button></form>
+                    <form method="POST" action="{{ route('admin.provider.reject', $provider) }}" class="d-flex gap-2">@csrf<input type="text" name="reason" class="form-control" placeholder="سبب الرفض" required minlength="5" maxlength="2000"><button class="btn btn-outline-danger"><i class="fa-solid fa-xmark ms-1"></i>رفض الطلب</button></form>
+                @elseif($provider->status === 'approved')
+                    <form method="POST" action="{{ route('admin.provider.suspend', $provider) }}" class="d-flex gap-2">@csrf<input name="reason" class="form-control" placeholder="سبب الإيقاف" required minlength="5" maxlength="2000"><button class="btn btn-warning"><i class="fa-solid fa-ban ms-1"></i>إيقاف المزود</button></form>
+                @elseif($provider->status === 'suspended')
+                    <form method="POST" action="{{ route('admin.provider.reactivate', $provider) }}" class="d-flex gap-2">@csrf<input name="reason" class="form-control" placeholder="سبب إعادة التفعيل" required minlength="5" maxlength="2000"><button class="btn btn-outline-success"><i class="fa-solid fa-rotate-right ms-1"></i>إعادة التفعيل</button></form>
+                @else
+                    <span class="text-muted small">لا توجد إجراءات متاحة لهذه الحالة.</span>
+                @endif
+            </div>
+        </div>
+    </section>
+@endif
 @endsection

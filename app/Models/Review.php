@@ -15,6 +15,10 @@ class Review extends Model
         'booking_id',
         'rating',
         'comment',
+        'is_visible',
+        'moderated_by',
+        'moderated_at',
+        'moderation_reason',
     ];
 
     protected $casts = [
